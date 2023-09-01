@@ -32,7 +32,9 @@
 #' getFromMail(con, "2023-01-01", "2023-08-31", "~/email_data", "example.com")
 #'
 #' @export
-getFromMail <- function(con, start, end, path, provider, name_folder = NULL, our_mail = "eez_serpam") {
+getFromMail <- function(con, start, end, path, 
+                        provider, name_folder = NULL, 
+                        our_mail = "eez_serpam") {
   if (is.null(name_folder)) {
     name_folder <- format.Date(start, "%Y_%m")
   }
