@@ -1,0 +1,203 @@
+Return-Path: <support@digitanimal.com>
+Delivered-To: serpam@eez.csic.es
+Received: from cel1.sgai.csic.es (lb1propf-correo.srv.correo.sgai-pro.sistemas.csic.es [10.100.82.2])
+	by buzon.csic.es (Postfix) with ESMTP id 3637B3142ED4;
+	Sat,  1 Jul 2023 02:01:29 +0200 (CEST)
+Received-SPF: Pass (mx.csic.es: domain of support@digitanimal.com
+  designates 185.56.87.11 as permitted sender)
+  identity=mailfrom; client-ip=185.56.87.11;
+  receiver=mx.csic.es; envelope-from="support@digitanimal.com";
+  x-sender="support@digitanimal.com"; x-conformance=spf_only;
+  x-record-type="v=spf1"; x-record-text="v=spf1
+  ip4:35.238.96.225 ip4:35.206.120.11 ip4:35.225.161.143
+  ip4:104.197.42.21 ip4:35.224.11.180 ip4:185.56.84.0/24
+  ip4:185.56.85.0/24 ip4:185.56.86.0/24 ip4:185.56.87.0/24
+  ~all"
+Authentication-Results: mx.csic.es; spf=Pass smtp.mailfrom=support@digitanimal.com; dkim=pass (signature verified) header.i=@digitanimal.com
+X-Ironport-Dmarc-Check-Result: validskip
+IronPort-SDR: YA0vFvUp//fchM+M2CJFxxydChLSwf3cscZmD0xnWWntEFHW7qa6mSThnX8f+KCgfwfFzwTsTs
+ xoosf2Pax+cFl07OnVnO/A6dY0NHqPig3Atj2citJj5kbcK1kc922M7iQsnsQU33MMhA1NfkGc
+ zEZadNfhTHQhQ0jxQ1dzDxwx9owLZ6rAjIl53OTpXvRdOBjfR/xgoz92kwms8Xfo6pd7m9Bcga
+ q36mj+XICRYr2Nomu7WG8+ZiyqjvkLXtcR5nLFm7qq6GOC8wM2YpOKz8BbdmhxLj7SfsLL6BHu
+ +l6H3EWpFb/77UoNi/LU/8U+
+X-IPAS-Result: =?us-ascii?q?A0FOCQBMa59khgtXOLlaHAEBAQEBAQcBARIBAQQEAQFAg?=
+ =?us-ascii?q?U+CM3MFKCwvBwhHjU6ke4M+FggHAQEBAQEBAQEBBAEERAQBAQQDgUyDS4V0A?=
+ =?us-ascii?q?iQBOBMBAgEDAQEBAQMCAwEBAQEBAQMBAQEEAQEBAgEBAgQCAgEBAhABAQEBI?=
+ =?us-ascii?q?BkHDgULNA1XDV0LgUQLgXQLAzENgjciggQsCF4BZQEBOGIOJSmDEAGCFDcRB?=
+ =?us-ascii?q?gEBAbBngSEDEIEBggkBAQaxLIFCBwkUgS6BV0yLFoIGgRKBRBuCDYEygl4Bi?=
+ =?us-ascii?q?3OOJZICZYEnb4EegSB6AgkCEWeBCAhfgW8+Ag1VCwtjgRxSOoFGAgIROhRBE?=
+ =?us-ascii?q?ngbAwcDgQUQLwcEMgkfBgkYLyUGUQctJAkTFUEEg1gKgQw/FQ4RQYIZYT8bU?=
+ =?us-ascii?q?IJtCRcZMAdYgRQDRB02CgMLcD01Bg4bN4IVgXZInEEHgQeIOoRCojYECgGhB?=
+ =?us-ascii?q?oQXhBWCMYMpl04Mg24BkzqSL4YihSCMYCCoHYF6I4FccIFugUlECwECAQEBD?=
+ =?us-ascii?q?QIBAQEDAQIBAQEJAQEBAY4dGYNbj3lCMzsCBwsBAQMJi0gBAQ?=
+IronPort-PHdr: A9a23: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
+ fIz
+IronPort-Data: A9a23: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
+IronPort-HdrOrdr: A9a23:pFuJFKErgAAX/9tQpLqEyMeALOsnbusQ8zAXPiFKJSC9F/bzqy
+ nApoV56faZslcssRIb9uxoWpPwPE80nKQdieJ9AV7IZmfbUQWTTL2LyOPZsl+Qflybh4kts5
+ tIQuxFJtX2EFhhlM7/pAm0euxQuuVuwsiT9J7jJ0EEd3ATV0lWhz0JcTqmLg==
+X-Talos-CUID: =?us-ascii?q?9a23=3A1ZD9OmtTm5lbKSqZpKu2EKlq6It4KlHc7FzzPnb?=
+ =?us-ascii?q?7Kj42U5PSE2SU9YV7xp8=3D?=
+X-Talos-MUID: 9a23:AMzjZQgGi/+OKJgU3YviFMMpKJtDxraUBxE3soxa4ZOWKhBLZyyzpWHi
+X-IronPort-Anti-Spam-Filtered: true
+X-IronPort-AV: E=Sophos;i="6.01,172,1684792800"; 
+   d="shp'?csv'?zip'48?scan'48,48,208?shx'48,48,208?cpg'48,48,208?dbf'48,48,208";a="72593465"
+X-Amp-Result: UNKNOWN
+X-Amp-Original-Verdict: FILE UNKNOWN
+X-Amp-File-Uploaded: False
+X-IronPort-Outbreak-Status: No, level 0, Unknown - Unknown
+Received: from delivery.antispam.mailspamprotection.com ([185.56.87.11])
+  by cel1.sgai.csic.es with ESMTP/TLS/ECDHE-RSA-AES128-GCM-SHA256; 01 Jul 2023 02:01:28 +0200
+Received: from 230.229.214.35.bc.googleusercontent.com ([35.214.229.230] helo=esm31.siteground.biz)
+	by instance-europe-west4-w5mx.prod.antispam.mailspamprotection.com with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <support@digitanimal.com>)
+	id 1qFO3I-005tIa-0a;
+	Sat, 01 Jul 2023 00:01:27 +0000
+DKIM-Signature: v=1; a=rsa-sha256; q=dns/txt; c=relaxed/relaxed;
+	d=digitanimal.com; s=default; h=Date:To:From:Subject:cc:list-help:
+	list-unsubscribe:list-subscribe:list-post:list-owner:list-archive;
+	bh=lMQ1CSRRnudmB83T13N4Avs5i5MeWVcdF3JBJCB4i7o=; b=UEkwWRlv27tUScJJ6mNm6h4Leu
+	JsPbEBZE08Lu69QrrOUBUcD2fLHVyK0jbVvDSAbUFu6BAr+0CUT5PM6Fx5AtB/i7FFKpcCr2jlsZI
+	NvB4105JqkxWWdDf2yxrImOWLiB0QW2qrbe2HQdxq7rcrgoDJUg5aDWLut4JHpYFX9lkCKSUbOUgH
+	C4z/hkWC84QCJ37Fh35gA+R60z1IdaZ6OvwEvmjxDLdGKQ9ymeOXDMRZxHeUyBsR5VNF6oZ+NG8Q4
+	vUdscKvZ2jCJrOLrayJjM1A0iR+OVlzTb83YjdguiL/cdNHmTNo2lQA9Xu4xyUIOC3DPSBecEgtGL
+	+Mn2uVIA==;
+Received: from [188.227.130.254] (port=56486 helo=[192.168.1.111])
+	by esm31.siteground.biz with esmtpsa  (TLS1.2) tls TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+	(Exim 4.96)
+	(envelope-from <support@digitanimal.com>)
+	id 1qFO3I-000Bfv-06;
+	Sat, 01 Jul 2023 00:01:24 +0000
+Content-Type: multipart/mixed; boundary="===============3878345706839679409=="
+MIME-Version: 1.0
+Subject: Informes mensuales
+From: support@digitanimal.com
+To: mauro.tognetti@eez.csic.es, antonio.perez@eez.csic.es, anabelen.robles@eez.csic.es, serpam@eez.csic.es
+Date: Sat, 01 Jul 2023 00:01:23 +0000
+X-AntiAbuse: This header was added to track abuse, please include it with any abuse report
+X-AntiAbuse: Primary Hostname - esm31.siteground.biz
+X-AntiAbuse: Original Domain - eez.csic.es
+X-AntiAbuse: Originator/Caller UID/GID - [47 12] / [47 12]
+X-AntiAbuse: Sender Address Domain - digitanimal.com
+X-Source: 
+X-Source-Args: 
+X-Source-Dir: 
+X-SGantispam-id: f2ad6216ff44367299755d6d8e7e3a13
+Message-ID: <E1qFO3I-005tIa-0a@instance-europe-west4-w5mx.prod.antispam.mailspamprotection.com>
+
+--===============3878345706839679409==
+Content-Type: application/octet-stream
+MIME-Version: 1.0
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="8876_62023.zip"
+
+UEsDBBQAAAAIACsA4VZsS+5wDAAAAAoAAAALAAAAaGlzdG9yeS5jcGfzDPbXtbAwtdQ1BABQSwME
+FAAAAAgAKwDhVuWiL8MTAAAAZAAAAAsAAABoaXN0b3J5LnNocGNgUOdiwA6MXjAzMDDikCQFAABQ
+SwMEFAAAAAgAKwDhVvTU9ogbAAAAQgAAAAsAAABoaXN0b3J5LmRiZmOuZmdkAAJHhkAGbCDE09cV
+ynQGEQFo8rxSAFBLAwQUAAAACAArAOFW5aIvwxMAAABkAAAACwAAAGhpc3Rvcnkuc2h4Y2BQ52LA
+DoxeMDMwMOKQJAUAAFBLAwQUAAAACAArAOFWNKDZqDAAAAAzAAAACwAAAGhpc3RvcnkuY3N2FcZB
+DgAQDATAu7fsn6RBaNIirP/jNAPNMQ0zWXhT+ufssmBCWK+geomb4hM+Olu4UEsBAhQDFAAAAAgA
+KwDhVmxL7nAMAAAACgAAAAsAAAAAAAAAAAAAAKSBAAAAAGhpc3RvcnkuY3BnUEsBAhQDFAAAAAgA
+KwDhVuWiL8MTAAAAZAAAAAsAAAAAAAAAAAAAAKSBNQAAAGhpc3Rvcnkuc2hwUEsBAhQDFAAAAAgA
+KwDhVvTU9ogbAAAAQgAAAAsAAAAAAAAAAAAAAKSBcQAAAGhpc3RvcnkuZGJmUEsBAhQDFAAAAAgA
+KwDhVuWiL8MTAAAAZAAAAAsAAAAAAAAAAAAAAKSBtQAAAGhpc3Rvcnkuc2h4UEsBAhQDFAAAAAgA
+KwDhVjSg2agwAAAAMwAAAAsAAAAAAAAAAAAAAKSB8QAAAGhpc3RvcnkuY3N2UEsFBgAAAAAFAAUA
+HQEAAEoBAAAAAA==
+
+--===============3878345706839679409==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+
+Se adjuntan una carpeta comprimida .ZIP que contiene un .CSV y los ficheros correspondientes para utilizar un SHAPEFILE de los datos mensuales del usuario.
+
+--===============3878345706839679409==--
+
