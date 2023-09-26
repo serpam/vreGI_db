@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS "dicc_ganaderos" (
 	PRIMARY KEY("id_ganadero")
 );
 DROP TABLE IF EXISTS "dicc_explotaciones";
-CREATE TABLE IF NOT EXISTS "dicc_explotaciones" (
+CREATE TABLE IF NOT EXISTS "dicc_explotaciones"(
 	"id_ganadero",
 	"name_ganadero",
 	"id_explotacion",
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS "dicc_dispositivos" (
 );
 DROP TABLE IF EXISTS "datos_gps";
 CREATE TABLE IF NOT EXISTS "datos_gps" (
-	"id"	INTEGER,
+	"id" INTEGER,
 	"codigo_gps",
 	"lat",
 	"lng",
