@@ -26,7 +26,7 @@ con$select_folder(name = "INBOX")
 
 ## Data from DIGITANIMAL 
 start_dates <- seq(as.Date("2022-01-27"),
-  as.Date("2023-09-25"),
+  as.Date("2023-08-27"),
   by = "1 month"
 )
 
@@ -60,7 +60,12 @@ purrr::map2(
     con = con,
     start = .x,
     end = .y,
-    path = here::here("rawdata/digitanimal"),
-    provider = "support@digitanimal.com"
+    path = here::here("rawdata/domodis"),
+    provider = "data@loc.gpsganado.es"
   )
 )
+
+
+
+
+

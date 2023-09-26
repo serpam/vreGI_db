@@ -8,7 +8,7 @@ library(here)
 library(tidyverse)
 library(fs)
 library(glue)
-
+source(here::here("scripts/extractGPSdata.R"))
 
 # s <- c("id_collar", "lat", "lng", "time_stamp")
 # input_path <- here::here("rawdata/digitanimal")
@@ -21,6 +21,14 @@ basename(list.dirs(here::here("rawdata/digitanimal/eez_serpam"), recursive = FAL
                              month_folder = .x,
                              provider = 'digitanimal', 
                              selected_variables = c("id_collar", "lat", "lng", "time_stamp")))
+
+
+basename(list.dirs(here::here("rawdata/domodis/eez_serpam"), recursive = FALSE)) |> 
+  purrr::map(~extractGPSdata(input_path = here::here("rawdata/domodis"),
+                             output_folder = here::here("rawdata/extracted"),
+                             month_folder = .x,
+                             provider = 'domodis', 
+                             selected_variables = c("familiar_name", "latitude", "longitude", "track_time")))
 
 
 
