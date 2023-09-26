@@ -26,7 +26,7 @@ con$select_folder(name = "INBOX")
 
 ## Data from DIGITANIMAL 
 start_dates <- seq(as.Date("2022-01-27"),
-  as.Date("2023-08-27"),
+  as.Date("2023-09-25"),
   by = "1 month"
 )
 
@@ -46,4 +46,21 @@ purrr::map2(
 
 
 ## Data from DOMODIS
+start_dates <- seq(as.Date("2022-01-27"),
+                   as.Date("2023-08-27"),
+                   by = "1 month"
+)
 
+end_dates <- start_dates + months(1)
+
+# apply function of all time series 
+purrr::map2(
+  start_dates, end_dates,
+  ~ getFromMail(
+    con = con,
+    start = .x,
+    end = .y,
+    path = here::here("rawdata/digitanimal"),
+    provider = "support@digitanimal.com"
+  )
+)

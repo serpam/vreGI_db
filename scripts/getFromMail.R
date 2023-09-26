@@ -57,18 +57,18 @@ getFromMail <- function(con, start, end, path,
   if (all(is.na(result))) {
     message("No results found with the given criteria")
   } else {
-    fetched_data <- result |>
-      con$fetch_body(write_to_disk = TRUE) |>
-      con$get_attachments(override = TRUE)
     
-    if (length(fetched_data) > 0) {
+    fetched_data <- result |> con$fetch_attachments()
+    
+    if (fetched_data) {
       # How many mails were read and extracted
       inbox_path <- here(path, our_mail, "INBOX")
-      file_names <- list.files(path = inbox_path, pattern = "*.txt")
+      file_names <- list.files(path = inbox_path, pattern = "*.zip",
+                               recursive = TRUE, full.names = TRUE)
       
       if (length(file_names) > 0) {
         # Move all data to a specific folder
-        dir_copy(inbox_path, here(path, our_mail, name_folder))
+        dir_copy(inbox_path, here(path, our_mail, name_folder), overwrite = TRUE)
         
         # Remove all data
         dir_delete(inbox_path)
@@ -81,11 +81,15 @@ getFromMail <- function(con, start, end, path,
         }
         
         momentum <- Sys.time()
+        
+        pattern <- "(?<=\\/)(.*?)(?=\\/)"
+        
         log_text <- glue::glue(
           "## Log date {momentum}
           - **Period**: the gps data corresponds to {name_folder}
           - Files extracted from mail account: {length(file_names)}
-          - IDs of mail extracted: {glue::glue_collapse(str_remove(str_remove(file_names, 'body'), '.txt'), sep = ', ')}.\n"
+          - IDs of mail extracted: {glue::glue_collapse(str_extract(string = str_remove(file_names, inbox_path), pattern = pattern), sep = ', ')}.\n"
+          
         )
         
         write(log_text, log_path, append = TRUE)
