@@ -1,5 +1,7 @@
 library(shiny)
 library(shinydashboard)
+library(shinydashboardPlus)
+library(shinyWidgets)
 library(leaflet)
 library(leaflet.extras)
 library(leafgl)
@@ -9,100 +11,134 @@ library(raster)
 library(here)
 library(readr)
 library(DT)
+library(shinyjs)
+library(shinyhelper)
 
-# read the data
-# gps <- read_csv(here::here("rawdata/sne1_filtered.csv")) |> dplyr::select(-id)
-gps <- readRDS(here::here("rawdata/cg_filtered.rds"))
+### Prepare data  --------------------------------------------
+gps_all <- readRDS(here::here("rawdata/gps_filered.rds")) 
+# dispositivos <-  readRDS("rawdata/dispositivos.rds") 
+# gps_all <- gps |> left_join(dispositivos) |> dplyr::select(-localidad)
 
-### 11970 datos con fecha NA (un 28 %) !! todos GSM
-gps_points <- st_as_sf(gps, coords = c("lng", "lat"), crs = 4326)
+minimumdate <- as.Date("2019-10-01")
 
+### UI  ------------------------------------------------------
 # header
-header <- shinydashboard::dashboardHeader(
-  title = "vre Grazing Intensity"
-)
+header <- shinydashboardPlus::dashboardHeader(title = "vre Grazing Intensity")
 
 # Sidebar
-sidebar <- shinydashboard::dashboardSidebar(
-  tags$p(tags$style(".right-align { text-align: right; }")),  # CSS embedded here
+sidebar <- shinydashboardPlus::dashboardSidebar(
+  sidebarMenu(
+    div(style="text-align:center",h4(strong("Data selection"))), 
+  # tags$p(h4(strong("Data selection"))),
+  
+  pickerInput(
+    inputId = "enp",
+    label = "1. Select Protected Area",
+    choices = c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
+    multiple = FALSE,
+    selected = "Sierra Nevada",
+    choicesOpt = list(
+      content = sprintf("<span class='badge text-bg-%s'>%s</span>",
+                        c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
+                        c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"))),
+    options = pickerOptions(container = "body")
+  ), 
+  
+  # selectInput(inputId = "enp", label = "1. Select Protected Area",
+  #             choices = c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
+  #             selected = "Sierra Nevada"),
   tags$br(),
-  tags$p(class = "right-align", h4(strong("1. Select livestock farmer")),  # Add the checkbox here
-  selectInput(inputId = "ganadero", label = "Livestock farmer",
-              choices = c("All", unique(gps_points$id_ganadero)),
-              selected = "All"),
-  tags$br(),
-  tags$p(h4(strong("2. Select Time period"))),
-  dateRangeInput(
-    inputId = "dateRange",
-    label = "Filter by date",
-    min = as.Date("2021-12-31"),
-    start = as.Date("2021-12-31"),
-    end = as.Date(Sys.Date()),
-    max = as.Date(Sys.Date())
+  conditionalPanel(
+    condition = "input.enp !== null", 
+    selectInput(inputId = "ganadero", label = "2. Select livestock farmer",
+                choices =  NULL)
   ),
   tags$br(),
-  actionButton("plotButton", "Plot the data"),
-  checkboxInput("showHeatmap", "Show Heatmap", FALSE))
+  dateRangeInput(inputId = "dateRange",label = "3. Filter by date",
+                 min = minimumdate, start = minimumdate,
+                 end = as.Date(Sys.Date()), max = as.Date(Sys.Date())
+  ),
+  tags$br(),
+  div(style="text-align:center",h4(strong("Plotting options"))), 
+  actionButton("plotButton", "Plot data"),
+  prettySwitch(
+    inputId = "showHeatmap",
+    label = "Show Heatmap", 
+    status = "success",
+    fill = TRUE, 
+    value = FALSE
+  )
+  
+  # checkboxInput("showHeatmap", "Show Heatmap", FALSE)
+)
 )
 
 # Body
 body <- shinydashboard::dashboardBody(
   tabBox(width = 12, id = "tabset",
-    tabPanel("Map", leafglOutput("mymap", width = "100%", height = "calc(100vh - 150px)")),
-    tabPanel("Table", dataTableOutput("table"))
+         tabPanel("Map", leafglOutput("mymap", width = "100%", height = "calc(100vh - 150px)")),
+         tabPanel("Table", dataTableOutput("table"))
   )
 )
 
+
+
+### Server  ------------------------------------------------------
 server <- function(input, output, session) {
-  # Filter data by Ganadero
-  ganadero_data <- reactive({
-    if (input$ganadero == "All") {
-      gps_points
-    } else {
-      gps_points |> dplyr::filter(id_ganadero == input$ganadero)
-    }
+  
+  # Filter data by ENP, Ganadero and Date 
+  enp <- reactive({
+    switch(input$enp, 
+           'Sierra Nevada' = 'nevada', 
+           'Sierra de las Nieves' = 'nieves', 
+           "Sierra de Filabres" = 'filabres',
+           "Cabo de Gata-Níjar" = 'cabogata')
   })
   
-  # Filter by date
-  filteredData <- reactive({
-    ganadero_data() |>
-      dplyr::filter(time_stamp >= input$dateRange[1] & time_stamp <= input$dateRange[2])
+  observeEvent(input$enp, {
+    ganaderos_enp <- gps_all |> 
+      dplyr::filter(enp == enp()) |> 
+      dplyr::select(id_ganadero) |> 
+      unique() |> 
+      pull()
+    
+    ganaderos <- c("All", ganaderos_enp)
+    
+    updateSelectInput(session, "ganadero", choices = ganaderos) 
   })
   
   observeEvent(input$ganadero, {
-    updateDateRangeInput(
-      session,
-      inputId = "dateRange",
-      min = as.Date("2021-12-31"),
-      max = as.Date(Sys.Date()),
-      start = min(ganadero_data()$time_stamp),
-      end = max(ganadero_data()$time_stamp)
+    datetime_ganadero <- gps_all |> 
+      dplyr::filter(enp == enp() & id_ganadero == input$ganadero & time_stamp >= input$dateRange[1] & time_stamp <= input$dateRange[2])
+    
+    updateDateRangeInput(session, "dateRange",
+                         min = minimumdate, max = as.Date(Sys.Date()),
+                         start = min(datetime_ganadero$time_stamp),
+                         end = max(datetime_ganadero$time_stamp)
     )
-    updateDateRangeInput(
-      session,
-      inputId = "dateRange",
-      min = min(ganadero_data()$time_stamp),
-      max = max(ganadero_data()$time_stamp)
+    updateDateRangeInput(session, inputId = "dateRange", 
+                         min = min(datetime_ganadero$time_stamp),
+                         max = max(datetime_ganadero$time_stamp)
     )
   })
   
-  # Center the map to the selected features
-  centro <- reactive({
-    coordinates(as(extent(filteredData()), "SpatialPolygons"))
-  })
-  
-  paleta <- reactive({
+  # Create a reactive expression for filtered data
+  filteredData <- reactive({
     if (input$ganadero == "All") {
-      pal <- colorFactor(palette = "viridis", gps_points$codigo_gps)
+      data <- gps_all %>%
+        filter(enp == enp(), time_stamp >= input$dateRange[1], time_stamp <= input$dateRange[2]) %>%
+        st_as_sf(coords = c("lng", "lat"), crs = 4326)
     } else {
-      custom_palette <- c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33')
-      pal <- colorFactor(palette = custom_palette, ganadero_data()$codigo_gps)
+      data <- gps_all %>%
+        filter(enp == enp(), id_ganadero == input$ganadero, time_stamp >= input$dateRange[1], time_stamp <= input$dateRange[2]) %>%
+        st_as_sf(coords = c("lng", "lat"), crs = 4326)
     }
+    return(data)
   })
   
   # Create the initial map
   output$mymap <- renderLeaflet({
-    leaflet(data = filteredData()) |>
+    leaflet() |>
       setView(lng = -3.9822, lat = 37.3846, zoom = 8) |>
       addWMSTiles(
         baseUrl = "http://www.ign.es/wms-inspire/ign-base?",
@@ -131,25 +167,44 @@ server <- function(input, output, session) {
   })
   
   # Update the map and heatmap based on input
-  observe({
+  observeEvent(input$plotButton, {
+    
+    withProgress(message = 'Plotting GPS data',
+                 detail = 'This may take a while...', 
+                 value = 0, {
+                   for (i in 1:15) {
+                     incProgress(1/15)
+                     Sys.sleep(0.25)}
+                   
+    
+    data <- filteredData()
+    
+    if (input$ganadero == "All") { 
+      pal <- colorFactor(palette = "viridis", data$codigo_gps)
+    } else { 
+      custom_palette <- c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33')
+      pal <- colorFactor(palette = custom_palette, data$codigo_gps)
+    }
+    
+    centro <- data |> st_combine() |> st_centroid()
+    
     leafletProxy('mymap') |>
-      clearMarkers() |>
+      clearGlLayers() |> 
       clearHeatmap()
     
-    popup_point <- paste0("<strong>livestock farmer:</strong> ", filteredData()$id_ganadero,
-                          "<br><strong>GPS:</strong> ", filteredData()$codigo_gps,
-                          "<br><strong>Tipo:</strong> ", filteredData()$type,
-                          "<br><strong>Fecha:</strong> ", filteredData()$time_stamp)
-    pal <- paleta()
+    popup_point <- paste0("<strong>livestock farmer:</strong> ", data$id_ganadero,
+                          "<br><strong>GPS:</strong> ", data$codigo_gps,
+                          "<br><strong>Tipo:</strong> ", data$type,
+                          "<br><strong>Fecha:</strong> ", data$time_stamp)
     
     leafletProxy('mymap') |>
       setView(
-        lng = as.numeric(centro()[1]),
-        lat = as.numeric(centro()[2]),
+        lng = st_coordinates(centro)[1],
+        lat = st_coordinates(centro)[2],
         zoom = 12
       ) |>
       addGlPoints(
-        data = filteredData(),
+        data = data,
         group = "GPS points",
         popup = popup_point,
         fillColor = ~pal(codigo_gps)
@@ -159,16 +214,21 @@ server <- function(input, output, session) {
       leafletProxy('mymap') |>
         addHeatmap(
           group = "density",
-          data = filteredData(),
-          lng = st_coordinates(filteredData())[, "X"],
-          lat = st_coordinates(filteredData())[, "Y"],
+          data = data,
+          lng = st_coordinates(data)[, "X"],
+          lat = st_coordinates(data)[, "Y"],
           blur = 20,
           max = 0.6,
           radius = 15
         )
     }
   })
+    })
+               
+               
+               
   
+  # Render the DataTable
   output$table <- renderDataTable({
     DT::datatable(
       filteredData(),
@@ -188,4 +248,5 @@ server <- function(input, output, session) {
   })
 }
 
-shinyApp(ui = shinydashboard::dashboardPage(header, sidebar, body), server)
+runApp(list(ui = shinydashboard::dashboardPage(header, sidebar, body), 
+            server = server), launch.browser = TRUE)
