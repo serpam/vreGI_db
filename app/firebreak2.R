@@ -11,7 +11,7 @@ library(DT)
 library(terra)
 
 # Read the data
-gps <- read_csv(here::here("rawdata/sne1_filtered.csv")) %>% dplyr::select(-id)
+gps <- read_csv(here::here("rawdata/gps_filered.csv")) 
 
 ### 11970 datos con fecha NA (un 28 %) !! todos GSM
 gps_points <- st_as_sf(gps, coords = c("lng", "lat"), crs = 4326)

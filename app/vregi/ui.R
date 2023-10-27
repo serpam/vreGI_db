@@ -15,13 +15,10 @@ library(shinyjs)
 library(shinyhelper)
 library(rintrojs)
 
-# library(fresh)
-
-
 
 
 ### Prepare data  --------------------------------------------
-gps_all <- readRDS("gps_filered.rds") 
+gps_all <- readRDS("gps_filered.rds")
 minimumdate <- as.Date("2019-10-01")
 
 ### UI  ------------------------------------------------------
@@ -43,9 +40,8 @@ header <- shinydashboardPlus::dashboardHeader(
 # Sidebar
 sidebar <- shinydashboardPlus::dashboardSidebar(
   sidebarMenu(
-    div(style="text-align:center",h4(strong("Data selection"))), 
-    # tags$p(h4(strong("Data selection"))),
-    
+    div(style = "text-align:center", h4(strong("Data selection"))),
+    # tags$p(h4(strong("Data selection")))
     pickerInput(
       inputId = "enp",
       label = "1. Select Protected Area",
@@ -53,43 +49,60 @@ sidebar <- shinydashboardPlus::dashboardSidebar(
       multiple = FALSE,
       selected = "Sierra Nevada",
       choicesOpt = list(
-        content = sprintf("<span class='badge text-bg-%s'>%s</span>",
-                          c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
-                          c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"))),
+       # style = rep(("color: green; background: lightgrey; font-weight: bold;"), 4)
+        content = sprintf(
+          "<span class='badge text-bg-%s'>%s</span>",
+          c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
+          c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar")
+        )
+      ),
       options = pickerOptions(container = "body")
-    ), 
-    
-    # selectInput(inputId = "enp", label = "1. Select Protected Area",
-    #             choices = c("Sierra Nevada", "Sierra de las Nieves", "Sierra de Filabres", "Cabo de Gata-Níjar"),
-    #             selected = "Sierra Nevada"),
+    ),
     tags$br(),
     conditionalPanel(
-      condition = "input.enp !== null", 
-      selectInput(inputId = "ganadero", label = "2. Select livestock farmer",
-                  choices =  NULL)
+      condition = "input.enp !== null",
+      selectInput(
+        inputId = "ganadero", label = "2. Select livestock farmer",
+        choices = NULL
+      )
     ),
     tags$br(),
-    dateRangeInput(inputId = "dateRange",label = "3. Filter by date",
-                   min = minimumdate, start = minimumdate,
-                   end = as.Date(Sys.Date()), max = as.Date(Sys.Date())
+    dateRangeInput(
+      inputId = "dateRange", label = "3. Filter by date",
+      min = minimumdate, start = minimumdate,
+      end = as.Date(Sys.Date()), max = as.Date(Sys.Date())
     ),
     tags$br(),
-    div(style="text-align:center",h4(strong("Plotting options"))), 
-    actionButton("plotButton", "Plot data"),
+    div(style = "text-align:center", h4(strong("Plotting options"))),
+    tags$br(),
     prettySwitch(
       inputId = "showHeatmap",
-      label = "Compute Heatmap", 
+      label = "Compute Heatmap",
       status = "default",
-      fill = TRUE, 
+      fill = TRUE,
       value = FALSE
-    ), 
+    ),
+    tags$br(),
+    prettySwitch(
+      inputId = "computePolygon",
+      label = "Compute Convex Polygon",
+      status = "default",
+      fill = TRUE,
+      value = FALSE
+    ),
+    tags$br(),
+    actionButton("plotButton", "View Data in Map"), 
     tags$br(),
     tags$br(),
-    tags$br()
-    
-    # tags$img(src = "www/serpam.png", width = "100px", height = "100px")
-    
-    # checkboxInput("showHeatmap", "Show Heatmap", FALSE)
+    div(
+      style = "text-align:center",
+      tags$img(src = "serpam.png", width = "200px", height = "200px")
+    ),
+    tags$br(),
+    div(
+      style = "text-align:center",
+      tags$img(src = "sumhal_nofondo.png", width = "200px", height = "150px")
+    )
   )
 )
 
@@ -98,13 +111,12 @@ body <- shinydashboard::dashboardBody(
   # tags$head(
   #   tags$link(rel = "stylesheet", type = "text/css", href = "serpam.css")
   # ),
-  # use_theme(mytheme), 
-  tabBox(width = 12, id = "tabset",
-         tabPanel("Map", leafglOutput("mymap", width = "100%", height = "calc(100vh - 150px)")),
-         tabPanel("Table", dataTableOutput("table"))
+  # use_theme(mytheme),
+  tabBox(
+    width = 12, id = "tabset",
+    tabPanel("Map", leafglOutput("mymap", width = "100%", height = "calc(100vh - 150px)")),
+    tabPanel("Table", dataTableOutput("table"))
   )
 )
 
 shinydashboard::dashboardPage(header, sidebar, body, skin = "green")
-                            
-

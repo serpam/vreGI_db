@@ -13,46 +13,48 @@ library(readr)
 library(DT)
 
 ### Prepare data  --------------------------------------------
-gps_all <- readRDS(here::here("rawdata/gps_filered.rds")) 
+gps_all <- readRDS(here::here("rawdata/gps_filered.rds"))
+minimumdate <- as.Date("2019-10-01")
 
 server <- function(input, output, session) {
-  
-  # Filter data by ENP, Ganadero and Date 
+  # Filter data by ENP, Ganadero and Date
   enp <- reactive({
-    switch(input$enp, 
-           'Sierra Nevada' = 'nevada', 
-           'Sierra de las Nieves' = 'nieves', 
-           "Sierra de Filabres" = 'filabres',
-           "Cabo de Gata-Níjar" = 'cabogata')
+    switch(input$enp,
+      "Sierra Nevada" = "nevada",
+      "Sierra de las Nieves" = "nieves",
+      "Sierra de Filabres" = "filabres",
+      "Cabo de Gata-Níjar" = "cabogata"
+    )
   })
-  
+
   observeEvent(input$enp, {
-    ganaderos_enp <- gps_all |> 
-      dplyr::filter(enp == enp()) |> 
-      dplyr::select(id_ganadero) |> 
-      unique() |> 
+    ganaderos_enp <- gps_all |>
+      dplyr::filter(enp == enp()) |>
+      dplyr::select(id_ganadero) |>
+      unique() |>
       pull()
-    
+
     ganaderos <- c("All", ganaderos_enp)
-    
-    updateSelectInput(session, "ganadero", choices = ganaderos) 
+
+    updateSelectInput(session, "ganadero", choices = ganaderos)
   })
-  
+
   observeEvent(input$ganadero, {
-    datetime_ganadero <- gps_all |> 
+    datetime_ganadero <- gps_all |>
       dplyr::filter(enp == enp() & id_ganadero == input$ganadero & time_stamp >= input$dateRange[1] & time_stamp <= input$dateRange[2])
-    
+
     updateDateRangeInput(session, "dateRange",
-                         min = minimumdate, max = as.Date(Sys.Date()),
-                         start = min(datetime_ganadero$time_stamp),
-                         end = max(datetime_ganadero$time_stamp)
+      min = minimumdate, max = as.Date(Sys.Date()),
+      start = min(datetime_ganadero$time_stamp),
+      end = max(datetime_ganadero$time_stamp)
     )
-    updateDateRangeInput(session, inputId = "dateRange", 
-                         min = min(datetime_ganadero$time_stamp),
-                         max = max(datetime_ganadero$time_stamp)
+    updateDateRangeInput(session,
+      inputId = "dateRange",
+      min = min(datetime_ganadero$time_stamp),
+      max = max(datetime_ganadero$time_stamp)
     )
   })
-  
+
   # Create a reactive expression for filtered data
   filteredData <- reactive({
     if (input$ganadero == "All") {
@@ -66,7 +68,7 @@ server <- function(input, output, session) {
     }
     return(data)
   })
-  
+
   # Create the initial map
   output$mymap <- renderLeaflet({
     leaflet() |>
@@ -79,102 +81,147 @@ server <- function(input, output, session) {
       ) |>
       addProviderTiles("Esri.WorldImagery", group = "Satellite") |>
       addWMSTiles(
-        'http://www.ideandalucia.es/wms/mdt_2005?',
-        layers = 'Sombreado_10',
+        "http://www.ideandalucia.es/wms/mdt_2005?",
+        layers = "Sombreado_10",
         options = WMSTileOptions(format = "image/png", transparent = TRUE),
         attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografía" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
-        group = 'Hillshade'
+        group = "Hillshade"
       ) |>
       addWMSTiles(
-        'http://www.ideandalucia.es/wms/mta10v_2007?',
-        layers = 'mta10v_2007',
+        "http://www.ideandalucia.es/wms/mta10v_2007?",
+        layers = "mta10v_2007",
         options = WMSTileOptions(format = "image/png", transparent = FALSE),
         attribution = '<a href="http://www.juntadeandalucia.es/institutodeestadisticaycartografía" target="_blank">Instituto de Estadística y Cartografía de Andalucía</a>',
-        group = 'topo2007'
+        group = "topo2007"
       ) |>
-      addLayersControl(overlayGroups = c("GPS points", "density"),
-                       baseGroups = c("IGNBaseTodo", "Satellite", "Hillshade", "topo2007"),
-                       position = "bottomleft",
-                       options = layersControlOptions(collapsed = FALSE))
+      addLayersControl(
+        overlayGroups = c("GPS points", "density", "minimum polygon"),
+        baseGroups = c("IGNBaseTodo", "Satellite", "Hillshade", "topo2007"),
+        position = "bottomleft",
+        options = layersControlOptions(collapsed = FALSE)
+      )
   })
-  
+
+
+
+
+
   # Update the map and heatmap based on input
   observeEvent(input$plotButton, {
-    
-    withProgress(message = 'Plotting GPS data',
-                 detail = 'This may take a while...', 
-                 value = 0, {
-                   for (i in 1:15) {
-                     incProgress(1/15)
-                     Sys.sleep(0.25)}
-                   
-                   
-                   data <- filteredData()
-                   
-                   if (input$ganadero == "All") { 
-                     pal <- colorFactor(palette = "viridis", data$codigo_gps)
-                   } else { 
-                     custom_palette <- c('#e41a1c', '#377eb8', '#4daf4a', '#984ea3', '#ff7f00', '#ffff33')
-                     pal <- colorFactor(palette = custom_palette, data$codigo_gps)
-                   }
-                   
-                   centro <- data |> st_combine() |> st_centroid()
-                   
-                   leafletProxy('mymap') |>
-                     clearGlLayers() |> 
-                     clearHeatmap()
-                   
-                   popup_point <- paste0("<strong>livestock farmer:</strong> ", data$id_ganadero,
-                                         "<br><strong>GPS:</strong> ", data$codigo_gps,
-                                         "<br><strong>Tipo:</strong> ", data$type,
-                                         "<br><strong>Fecha:</strong> ", data$time_stamp)
-                   
-                   leafletProxy('mymap') |>
-                     setView(
-                       lng = st_coordinates(centro)[1],
-                       lat = st_coordinates(centro)[2],
-                       zoom = 12
-                     ) |>
-                     addGlPoints(
-                       data = data,
-                       group = "GPS points",
-                       popup = popup_point,
-                       fillColor = ~pal(codigo_gps)
-                     )
-                   
-                   if (input$showHeatmap) {
-                     leafletProxy('mymap') |>
-                       addHeatmap(
-                         group = "density",
-                         data = data,
-                         lng = st_coordinates(data)[, "X"],
-                         lat = st_coordinates(data)[, "Y"],
-                         blur = 20,
-                         max = 0.6,
-                         radius = 15
-                       )
-                   }
-                 })
+    withProgress(
+      message = "Plotting GPS data",
+      detail = "This may take a while...",
+      value = 0,
+      {
+        for (i in 1:15) {
+          incProgress(1 / 15)
+          Sys.sleep(0.25)
+        }
+
+
+        data <- filteredData()
+
+        if (input$ganadero == "All") {
+          pal <- colorFactor(palette = "viridis", data$codigo_gps)
+        } else {
+          custom_palette <- c("#e41a1c", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#ffff33")
+          pal <- colorFactor(palette = custom_palette, data$codigo_gps)
+        }
+
+        centro <- data |>
+          st_combine() |>
+          st_centroid()
+
+        leafletProxy("mymap") |>
+          clearGlLayers() |>
+          clearHeatmap()
+
+        popup_point <- paste0(
+          "<strong>livestock farmer:</strong> ", data$id_ganadero,
+          "<br><strong>GPS:</strong> ", data$codigo_gps,
+          "<br><strong>Tipo:</strong> ", data$type,
+          "<br><strong>Fecha:</strong> ", data$time_stamp
+        )
+
+        leafletProxy("mymap") |>
+          setView(
+            lng = st_coordinates(centro)[1],
+            lat = st_coordinates(centro)[2],
+            zoom = 12
+          ) |>
+          addGlPoints(
+            data = data,
+            group = "GPS points",
+            popup = popup_point,
+            fillColor = ~ pal(codigo_gps)
+          )
+
+        if (input$showHeatmap) {
+          leafletProxy("mymap") |>
+            addHeatmap(
+              group = "density",
+              data = data,
+              lng = st_coordinates(data)[, "X"],
+              lat = st_coordinates(data)[, "Y"],
+              blur = 20,
+              max = 0.6,
+              radius = 15
+            )
+        }
+
+        if (input$computePolygon > 0) {
+          aux_points <- sf::st_as_sf(filteredData(), coords = c("lng", "lat"))
+          aux <- terra::vect(aux_points)
+          minimum_polygon <- terra::convHull(aux)
+
+          leafletProxy("mymap") |>
+            clearShapes() |>
+            addPolygons(
+              data = minimum_polygon,
+              fillColor = "transparent",
+              color = "black",
+              weight = 2,
+              group = "minimum polygon"
+            )
+        }
+      }
+    )
   })
-  
-  
-  
-  
+
+
   # Render the DataTable
   output$table <- renderDataTable({
+    d <- filteredData() %>%
+      dplyr::mutate(
+        longitude = sf::st_coordinates(.)[, 1],
+        latitude = sf::st_coordinates(.)[, 2]
+      ) |>
+      st_drop_geometry() |>
+      dplyr::select(-enp, -qc)
+
     DT::datatable(
-      filteredData(),
-      extensions = 'Buttons',
+      d,
+      colnames = c(
+        "GPS device" = "codigo_gps",
+        "Time" = "time_stamp",
+        "Livestock Farmer" = "id_ganadero",
+        "GPS type" = "type",
+        "Animal" = "animal",
+        "Herd size" = "size",
+        "Lat" = "latitude",
+        "Long" = "longitude"
+      ),
+      extensions = "Buttons",
       options = list(
         scrollX = TRUE,
         lengthMenu = c(25, 10, 15),
         paging = TRUE,
         searching = TRUE,
         fixedColumns = TRUE,
-        autoWidth = TRUE,
+        autoWidth = FALSE,
         ordering = TRUE,
-        dom = 'Bfrtip',
-        buttons = c('copy', 'csv', 'excel')
+        dom = "Bfrtip",
+        buttons = c("copy", "csv", "excel")
       )
     )
   })
