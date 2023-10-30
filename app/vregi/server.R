@@ -6,7 +6,7 @@ gps_all <- readRDS("gps_filtered.rds")
 minimumdate <- as.Date("2019-10-01")
 
 server <- function(input, output, session) {
-  
+
   ### ----------------------------------------------
   # Show introduction text (Intro modal)
   observeEvent("", {
@@ -18,11 +18,11 @@ server <- function(input, output, session) {
       )
     ))
   })
-  
+
   observeEvent(input$intro,{
     removeModal()
   })
-  
+
   # Show tour
   observeEvent(input$intro,
                introjs(session,
@@ -30,8 +30,8 @@ server <- function(input, output, session) {
                                       "prevLabel" = "Previous",
                                       "doneLabel" = "Done"))
   )
-  
-  
+
+
   
   # Filter data by ENP, Ganadero and Date
   enp <- reactive({
