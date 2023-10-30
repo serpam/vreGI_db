@@ -1,19 +1,8 @@
-library(shiny)
-library(shinydashboard)
-library(shinydashboardPlus)
-library(shinyWidgets)
-library(leaflet)
-library(leaflet.extras)
-library(leafgl)
-library(sf)
-library(tidyverse)
-library(raster)
-library(here)
-library(readr)
-library(DT)
+
 
 ### Prepare data  --------------------------------------------
-gps_all <- readRDS(here::here("rawdata/gps_filered.rds"))
+# gps_all <- readRDS(here::here("rawdata/gps_fitlered.rds"))
+gps_all <- readRDS("gps_filtered.rds")
 minimumdate <- as.Date("2019-10-01")
 
 server <- function(input, output, session) {
@@ -122,7 +111,7 @@ server <- function(input, output, session) {
         group = "topo2007"
       ) |>
       addLayersControl(
-        overlayGroups = c("GPS points", "density", "minimum polygon"),
+        overlayGroups = c("GPS points", "minimum polygon", "kernel density", "density"),
         baseGroups = c("IGNBaseTodo", "Satellite", "Hillshade", "topo2007"),
         position = "bottomleft",
         options = layersControlOptions(collapsed = FALSE)
@@ -161,7 +150,8 @@ server <- function(input, output, session) {
 
         leafletProxy("mymap") |>
           clearGlLayers() |>
-          clearHeatmap()
+          clearHeatmap() |> 
+          clearShapes()
 
         popup_point <- paste0(
           "<strong>livestock farmer:</strong> ", data$id_ganadero,
@@ -202,7 +192,7 @@ server <- function(input, output, session) {
           minimum_polygon <- terra::convHull(aux)
 
           leafletProxy("mymap") |>
-            clearShapes() |>
+            removeShape("minimum_polygon") |>
             addPolygons(
               data = minimum_polygon,
               fillColor = "transparent",
@@ -211,11 +201,85 @@ server <- function(input, output, session) {
               group = "minimum polygon"
             )
         }
+        
+        if (input$computeKde > 0) {
+          aux_points_kde <- sf::st_as_sf(filteredData(), coords = c("lng", "lat"))
+          kde <- eks::st_kde(aux_points_kde)
+          kde95 <- st_get_contour(kde, con = 95)
+          
+          leafletProxy("mymap") |>
+           removeShape("kernel density") |>
+            addPolygons(
+              data = kde95,
+              fillColor = "transparent",
+              color = "blue",
+              weight = 2,
+              group = "kernel density"
+            )
+        }
       }
     )
   })
 
+  #### Download shapefiles 
+  
+  output$downloadShp <- downloadHandler(
+    filename = 'spatial.zip',
+    content = function(file) {
+      
+      withProgress(
+        message = "Exporting shapefiles",
+        detail = "This may take a while...",
+        value = 0,
+        {
+          for (i in 1:10) {
+            incProgress(1 / 10) 
+            Sys.sleep(0.25)}
+          
+      if (length(Sys.glob("spatial.*")) > 0) {
+        file.remove(Sys.glob("spatial.*"))
+      }
+      
+      oldwd <- setwd(tempdir())
+      
+      points <- sf::st_as_sf(filteredData(), coords = c("lng", "lat")) 
+      st_write(points, dsn = "points.shp", append = FALSE)
+      
+      aux <- terra::vect(points)
+      mp <- terra::convHull(aux)
+      minimum_polygon <- sf::st_as_sf(mp)
+      st_write(minimum_polygon, dsn = "minimum_polygon.shp", append = FALSE)
+      
+      kde <- eks::st_kde(points)
+      kde95 <- st_get_contour(kde, con = 95)
+      st_write(kde95, dsn = "kde95.shp", append = FALSE)
 
+      zip(zipfile = 'spatial.zip', files = c(Sys.glob("points.*"), 
+                                             Sys.glob("minimum_polygon.*"),
+                                             Sys.glob("kde95.*")))
+      
+      file.copy("spatial.zip", file)
+      
+      if (length(Sys.glob("spatial.*")) > 0) {
+        file.remove(Sys.glob("spatial.*"))
+      }
+      
+      if (length(Sys.glob("minimum_polygon.*")) > 0) {
+        file.remove(Sys.glob("minimum_polygon.*"))
+      }
+      
+      if (length(Sys.glob("kde95.*")) > 0) {
+        file.remove(Sys.glob("kde95.*"))
+      }
+      
+      setwd(oldwd)
+        })
+      
+      showNotification("Done!", type = "warning")
+    }
+  )
+  
+  
   # Render the DataTable
   output$table <- renderDataTable({
     d <- filteredData() %>%
@@ -241,7 +305,7 @@ server <- function(input, output, session) {
       extensions = "Buttons",
       options = list(
         scrollX = TRUE,
-        lengthMenu = c(25, 10, 15),
+        lengthMenu = c(20, 10, 15),
         paging = TRUE,
         searching = TRUE,
         fixedColumns = TRUE,

@@ -1,22 +1,7 @@
-library(shiny)
-library(shinydashboard)
-library(shinydashboardPlus)
-library(shinyWidgets)
-library(leaflet)
-library(leaflet.extras)
-library(leafgl)
-library(sf)
-library(tidyverse)
-library(raster)
-library(here)
-library(readr)
-library(DT)
-library(shinyjs)
-library(shinyhelper)
-library(rintrojs)
+
 
 ### Prepare data  --------------------------------------------
-gps_all <- readRDS("gps_filered.rds")
+# gps_all <- readRDS("gps_filtered.rds")
 minimumdate <- as.Date("2019-10-01")
 
 ### UI  ------------------------------------------------------
@@ -24,13 +9,13 @@ minimumdate <- as.Date("2019-10-01")
 header <- shinydashboard::dashboardHeader(
   title = "vre Grazing Intensity",
   tags$li(
-    a(
-      strong("About"),
-      height = 35,
-      href = "https://github.com/serpam",
-      title = "",
-      targer = "_blank"
-    ),
+    # a(
+    #   strong("Code"),
+    #   height = 35,
+    #   href = "https://github.com/serpam",
+    #   title = "",
+    #   targer = "_blank"
+    # ),
     class = "dropdown",
     tags$style(".skin-blue .main-header .logo {background-color: #43839f;}"),
     tags$style(".skin-blue .main-header .logo:hover {background-color: #43839f;}"),
@@ -38,7 +23,8 @@ header <- shinydashboard::dashboardHeader(
     tags$style(".main-header {max-height: 50px;}"),
     tags$style(".main-header .logo {height: 50px;}"),
     tags$style(".sidebar-toggle {height: 50px; padding-top: 1px !important;}"),
-    tags$style(".navbar {min-height:50px !important}")
+    tags$style(".navbar {min-height:50px !important}"),
+    tags$style(".skin-blue .sidebar a { color: #444; }") #change the color of download button 
   )
 )
 
@@ -89,33 +75,45 @@ sidebar <- shinydashboard::dashboardSidebar(
       div(style = "text-align:center", h3(strong("Plotting options"))),
       prettySwitch(
         inputId = "showHeatmap",
-        label = "Compute Heatmap",
+        label = "Heatmap",
         status = "default",
         fill = TRUE,
         value = FALSE
       ),
       prettySwitch(
         inputId = "computePolygon",
-        label = "Compute Convex Polygon",
+        label = "Minimum convex polygon",
+        status = "default",
+        fill = TRUE,
+        value = FALSE
+      ),
+      prettySwitch(
+        inputId = "computeKde",
+        label = "Kernel Density (95%)",
         status = "default",
         fill = TRUE,
         value = FALSE
       ),
       data.step = 3,
-      data.intro = "You can choose to compute a <b>heatmap</b> and the <b>miminum convex polygon</b> from your data selection."
+      data.intro = "You can choose to compute a <b>heatmap</b>, the <b>miminum convex polygon</b>, and a polygon with a <b>Kernel density estimation (95 %)</b> of the data selected."
+    ),
+    introBox(
+      div(style = "text-align:center", 
+          downloadButton('downloadShp', 'Download shapefiles (.shp)')),
+      data.step = 7,
+      data.intro = "You can download the filtered point data as shapefile, and also the minimun polygon convex and the polygon of the kernel estimation as shapefiles."
     ),
     tags$br(),
     introBox(
-      actionButton("plotButton", "View Data in Map"),
+      div(style = "text-align:center",
+          actionButton("plotButton", "View Data in Map")),
       data.step = 4,
       data.intro = "Each time you want view the data on map, please click the <b>View Data in Map</b> button. Click this button each time you change your selection to update the results in the map"
     ),
-    tags$br(),
     div(
       style = "text-align:center",
       tags$img(src = "serpam.png", width = "200px", height = "200px")
     ),
-    tags$br(),
     div(
       style = "text-align:center",
       tags$img(src = "sumhal_nofondo.png", width = "200px", height = "150px")
@@ -148,7 +146,8 @@ body <- shinydashboard::dashboardBody(
         data.intro = "The results are also displayed in table format that could be downloaded in several formats."
       ),
       dataTableOutput("table")
-    )
+    ), 
+    tabPanel("More info", includeMarkdown("more_info.md"))
   )
 )
 
