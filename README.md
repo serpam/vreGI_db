@@ -1,6 +1,11 @@
-## Virtual Research Environment Grazing Intensity (*vreGI*)
 
+# <span style="color:#43839f">vreGI:</span> Virtual Research Environment Grazing Intensity <img src="app/vregi/www/logo_vreGI.png" align="right" width="240"/>
+
+
+<!-- badges: start -->
 [![DOI](https://zenodo.org/badge/457682829.svg)](https://zenodo.org/badge/latestdoi/457682829)
+<!-- badges: end -->
+
 
 This repo contains the information with an application that visualizes livestock movement data from different livestock farms located in several natural areas of Andalusia. Different GPS devices (n = 96) have been installed in 16 livestock farms, mainly sheep, but also goats and cows. Different tracking technologies (sigfox, gsm, satellite and continuous measurement) were used and the movement of the animals was monitored since February 2022. These devices have been installed in the framework of the project [SUMHAL](https://lifewatcheric-sumhal.csic.es/) (*Sustainability for Mediterranean Hotspots in Andalusia integrating LifeWatch ERIC*), specifically in the subprojects LWE2103026 and LWE210303027 that focus on analysing the role of traditional silvopastoral practices in the biodiversity of ecosystems and in the prevention of forest fires in natural areas of Andalusia, for which it will be supported by updated technological tools. These sub-projects are being carried out by the Service for the Evaluation, Restoration and Protection of Mediterranean Agrosystems ([SERPAM](https://serpam.csic.es/)) of the [Estación Experimental del Zaidin](https://www.eez.csic.es/), of the CSIC. 
 
@@ -41,10 +46,9 @@ source("./app/app.R")
 ### How to cite: 
 Pérez-Luque, A.J.; Tognetti Barbieri, M.J.; Ramos-Font, M.E.; Robles-Cruz, A.B. (2023). vreGI virtual Research Environment Grazing Intensity: Monitoring grazing patterns in Andalusia Natural protected areas. https://github.com/serpam/vreGI_db. version 1.0. doi: [10.5281/zenodo.7347993](https://doi.org/10.5281/zenodo.7347993) 
 
-
 ```
 @misc{PerezLuque2023,
-	title        = {vreGI virtual Research Environment Grazing Intensity: Monitoring grazing patterns in Andalusia Natural protected areas},
+	title        = {vreGI: virtual Research Environment Grazing Intensity: Monitoring grazing patterns in Andalusia Natural protected areas},
 	author       = {Pérez-Luque, Antonio Jesús and Toggnetti Barbieri, Mauro José and 
 	                Ramos-Font, Maria Eugenia and Robles Cruz, Ana Belén},
 	year         = {2023},
