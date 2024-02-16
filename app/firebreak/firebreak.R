@@ -12,7 +12,7 @@ library(DT)
 
 
 # read the data 
-gps <- read_csv(here::here("rawdata/sne1_filtered.csv")) |> dplyr::select(-id)
+gps <- read_csv(here::here("app/firebreak/sne1_filtered.csv")) |> dplyr::select(-id)
 
 
 ### 11970 datos con fecha NA (un 28 %) !! todos GSM 
